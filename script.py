@@ -11,7 +11,7 @@ import ROOT
 #In order to calculate the death probability the death number has to be STRICTLY higher that this value (and the confirmed cases have to be different to zero!)
 DeathCut=20
 #In order to perform the plot and the fit the confirmed case has to be STRICTLY higher that this value
-ConfirmedCut=20
+ConfirmedCut=100
 
 countries=["China","Italy","Iran","UK","France","Germany","US","Canada","Spain","Russia","Korea, South","Taiwan","Singapore","Thailand","Switzerland","Norway","Sweden","Netherlands","Denmark","Japan","Belgium","Austria","Qatar","Malaysia","Greece","Finland","Baharain","Israel","Czechia","Slovenia","Portugal","Iceland","Brazil","Ireland","Romania","Estonia","India","Poland","Egypt","Kuwait","Iraq","Lebanon","San Marino","Indonesia","Turkey","Ecuador","Saudi Arabia","Peru","South Africa","Mexico","Slovakia","Colombia","Bulgaria","Argentina","Uruguay","Hungary","Ukraine","Albania","Malta","Senegal","Kenya","Congo","Namibia","Madagascar"]
 main=ROOT.TFile("COVID_data.root","RECREATE")#root file creation
@@ -35,8 +35,8 @@ ass=[]
 prob=[]
 ########
 path="csse_covid_19_data/csse_covid_19_daily_reports"
-col_list=["Province/State","Country/Region", "Last Update", "Confirmed", "Deaths", "Recovered"]
-days=["01-22","01-23","01-24","01-25","01-26","01-27","01-28","01-29","01-30","01-31","02-01","02-02","02-03","02-04","02-05","02-06","02-07","02-08","02-09","02-10","02-11","02-12","02-13","02-14","02-15","02-16","02-17","02-18","02-19","02-20","02-21","02-22","02-23","02-24","02-25","02-26","02-27","02-28","02-29","03-01","03-02","03-03","03-04","03-05","03-06","03-07","03-08","03-09","03-10","03-11","03-12","03-13","03-14","03-15","03-16","03-17","03-18","03-19","03-20"]
+#col_list=["Province/State","Country/Region", "Last Update", "Confirmed", "Deaths", "Recovered"]
+days=["01-22","01-23","01-24","01-25","01-26","01-27","01-28","01-29","01-30","01-31","02-01","02-02","02-03","02-04","02-05","02-06","02-07","02-08","02-09","02-10","02-11","02-12","02-13","02-14","02-15","02-16","02-17","02-18","02-19","02-20","02-21","02-22","02-23","02-24","02-25","02-26","02-27","02-28","02-29","03-01","03-02","03-03","03-04","03-05","03-06","03-07","03-08","03-09","03-10","03-11","03-12","03-13","03-14","03-15","03-16","03-17","03-18","03-19","03-20","03-21","03-22","03-23"]
 
 print("Countries considered: " +str(len(countries)))
 print("Days passed from 22/01: "+str(len(days)-1))
@@ -53,6 +53,7 @@ for q in range (0,len(countries)):
     #####################################
     main.mkdir(country.replace(" ",""))
     main.cd(country.replace(" ",""))
+
 
 
     #global lists
@@ -82,6 +83,15 @@ for q in range (0,len(countries)):
     ##################################################################################################################################################################
     #gathering data
     for a in range(0,len(days)):#this for runs over the data files
+            #quei cretini hanno cambiato il formato delle colonne ad un certo punto
+            if a<=60:
+                col_list=["Province/State","Country/Region", "Last Update", "Confirmed", "Deaths", "Recovered"]
+                country_col="Country/Region"
+            if a>60:
+                col_list=["FIPS","Admin2","Province_State","Country_Region","Last_Update","Lat","Long_","Confirmed","Deaths","Recovered","Active","Combined_Key"]
+                country_col="Country_Region"
+
+
             df.append( pd.read_csv(str(path)+"/"+str(days[a])+"-2020.csv", usecols=col_list) )
             #Replace the NAN with 0
             df[a] = df[a].replace(np.nan, 0)
@@ -93,11 +103,11 @@ for q in range (0,len(countries)):
             Ctemp=0#have to be resetted for every file
             Dtemp=0#they sum the occorrencies over all the provicnes
             Rtemp=0
-            for b in range(0,len(df[a]["Country/Region"])):#this for runs over the single file
-                if df[a]["Country/Region"][b]==country:
+            for b in range(0,len(df[a][country_col])):#this for runs over the single file
+                if df[a][country_col][b]==country:
                     #print(df[a]["Province/State"][b])
                     #print(a)
-                    #print(country+" è presente il giorno: "+days[a]+" linea "+str(b)+" su "+str(len(df[a]["Country/Region"]))+" linee totali")
+                    #print(country+" è presente il giorno: "+days[a]+" linea "+str(b)+" su "+str(len(df[a][country_col]))+" linee totali")
                     Ctemp=Ctemp+df[a]["Confirmed"][b]
                     Dtemp=Dtemp+df[a]["Deaths"][b]
                     Rtemp=Rtemp+df[a]["Recovered"][b]
@@ -105,25 +115,25 @@ for q in range (0,len(countries)):
     ##################################################################################################################################################################
     #CORRECTION IN CHINA DATASETS
                 if country=="China":#this take into account the fact that "Mainland China" became just "China" after some files
-                    if df[a]["Country/Region"][b]=="Mainland China":
+                    if df[a][country_col][b]=="Mainland China":
                         Ctemp=Ctemp+df[a]["Confirmed"][b]
                         Dtemp=Dtemp+df[a]["Deaths"][b]
                         Rtemp=Rtemp+df[a]["Recovered"][b]
     #CORRECTION IN UK DATASETS
                 if country=="UK":#this take into account the fact that "Mainland China" became just "China" after some files
-                    if df[a]["Country/Region"][b]=="United Kingdom":
+                    if df[a][country_col][b]=="United Kingdom":
                         Ctemp=Ctemp+df[a]["Confirmed"][b]
                         Dtemp=Dtemp+df[a]["Deaths"][b]
                         Rtemp=Rtemp+df[a]["Recovered"][b]
     #CORRECTION IN South Korea DATASETS
                 if country=="Korea, South":#this take into account the fact that "Mainland China" became just "China" after some files
-                    if df[a]["Country/Region"][b]=="South Korea":
+                    if df[a][country_col][b]=="South Korea":
                         Ctemp=Ctemp+df[a]["Confirmed"][b]
                         Dtemp=Dtemp+df[a]["Deaths"][b]
                         Rtemp=Rtemp+df[a]["Recovered"][b]
     #CORRECTION IN Taiwan DATASETS
                 if country=="Taiwan":#this take into account the fact that "Mainland China" became just "China" after some files
-                    if df[a]["Country/Region"][b]=="Taiwan*":
+                    if df[a][country_col][b]=="Taiwan*":
                         Ctemp=Ctemp+df[a]["Confirmed"][b]
                         Dtemp=Dtemp+df[a]["Deaths"][b]
                         Rtemp=Rtemp+df[a]["Recovered"][b]
